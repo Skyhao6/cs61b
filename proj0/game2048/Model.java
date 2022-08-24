@@ -113,6 +113,66 @@ public class Model extends Observable {
         // TODO: Modify this.board (and perhaps this.score) to account
         // for the tilt to the Side SIDE. If the board changed, set the
         // changed local variable to true.
+        board.setViewingPerspective(side);
+        int size = board.size();
+
+        for (int col = 0; col < size; col++) {
+            // Step1. move every non-empty tile in order
+            // [x, 2, 2, x] -> [2, 2, x, x]
+            // skip merging this step.
+            /** 先考虑移动tile，将格子填满，而此时肯定游戏未结束
+             **/
+            for (int row = size - 1; row >= 0; row--) {  //因为题目给定为up方向，所以使用倒序，更容易理解
+                Tile t = board.tile(col, row);
+                if (t != null) {  //找到数字位置
+                    // find nextPos which is null
+                    int nextPos = 3;  //数格子，找到从上到下第一个空位置，nextPos最大为3，对应最低移动到最高
+                    while (nextPos >= row) {
+                        if (board.tile(col, nextPos) == null) {
+                            break;
+                        }
+                        nextPos--;
+                    }
+                    // check if nextPos is a legal position
+                    if (nextPos >= row) {  //验证边界
+                        board.move(col, nextPos, t);  //把t移动到这个col最靠上的一个空位置
+                        changed = true;  //有变化发生，true
+                    }
+                }
+            }
+            // Step2. try to merge
+            // [2, 2, x, x] -> [4, x, x, x]
+            /**再考虑合并merge
+             * */
+            for (int row = 3; row >= 0; row--) {  //因为题目给定为up方向，所以使用倒序，更容易理解
+                Tile curTile = board.tile(col, row);  //定位到最上方的第col列
+                int nextLine = row - 1;  //定位到其下一行
+                if (nextLine < 0) {  //验证边界
+                    break;
+                }
+                Tile nextTile = board.tile(col, nextLine);
+                if (curTile == null || nextTile == null) {  //验证是否有空位
+                    break;
+                }
+                int nextValue = nextTile.value();
+                if (nextValue == curTile.value()) {  //上下两行的值相同，将下行tile移动到上行
+                    board.move(col, row, nextTile);
+                    score += curTile.value() * 2;  //分数为合并后的数值
+                    for (int p = nextLine - 1; p >= 0; p--) {  //定位再下一行
+                        Tile tt = board.tile(col, p);
+                        if (tt == null) {
+                            break;
+                        }
+                        if (p < size) {
+                            board.move(col, p + 1, tt);  //将再下一行直接往上移动
+                        }
+                    }
+                    changed = true;
+                }
+            }
+        }
+        board.setViewingPerspective(Side.NORTH);
+
 
         checkGameOver();
         if (changed) {
@@ -138,6 +198,12 @@ public class Model extends Observable {
      * */
     public static boolean emptySpaceExists(Board b) {
         // TODO: Fill in this function.
+
+        for(int i = 0; i<b.size(); i++){
+            for(int j = 0; j<b.size(); j++){
+                if(b.tile(i,j) == null) return true;
+            }
+        }
         return false;
     }
 
@@ -148,6 +214,12 @@ public class Model extends Observable {
      */
     public static boolean maxTileExists(Board b) {
         // TODO: Fill in this function.
+
+        for(int i = 0; i<b.size(); i++) {
+            for(int j = 0; j<b.size(); j++) {
+                if(b.tile(i,j) != null && b.tile(i,j).value() == MAX_PIECE) return true;
+            }
+        }
         return false;
     }
 
@@ -159,6 +231,19 @@ public class Model extends Observable {
      */
     public static boolean atLeastOneMoveExists(Board b) {
         // TODO: Fill in this function.
+
+        if(emptySpaceExists(b)) return true;
+        int[] dx={-1,0,0,1};
+        int[] dy={0,1,-1,0};
+        for(int i = 0; i<b.size(); i++) {
+            for(int j = 0; j<b.size(); j++) {
+                for(int q=0;q<4;q++){
+                    int ni=i+dx[q];
+                    int nj=j+dy[q];
+                    if(ni>0&&ni<b.size()&&nj>0&&nj<b.size() && b.tile(i,j)==b.tile(ni,nj)) return true;
+                }
+            }
+        }
         return false;
     }
 

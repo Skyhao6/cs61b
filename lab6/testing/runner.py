@@ -8,7 +8,6 @@ from shutil import copyfile, rmtree
 from math import log
 from glob import glob
 import os
-print(os.environ["PATH"])
 
 SHORT_USAGE = """\
 Usage: python3 runner.py OPTIONS TEST.in ...
